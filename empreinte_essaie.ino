@@ -1,8 +1,18 @@
-#include <Adafruit_Fingerprint.h>
+// Définitions des bibliothèques nécessaires aux composants
+#include <Adafruit_Fingerprint.h>  
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+//Définitions des caractéristiques de l'éran d'affichage OLED
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 // Définition des broches pour les LED
 const int LED_SUCCES = 13;
 const int LED_ECHEC = 4;
+
 
 // Définition des broches de communication Série logicielle (SoftwareSerial)
 // Broche 2 de l'Arduino connectée au TX du capteur (Fil Vert)
@@ -40,6 +50,31 @@ void setup()
   finger.getTemplateCount();
   Serial.print("Le capteur contient "); Serial.print(finger.templateCount); Serial.println(" empreintes enregistrées.");
   Serial.println("En attente d'un doigt valide...");
+
+  Serial.begin(9600);
+
+  // Initialisation de l'écran (adresse I2C 0x3C)
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("Erreur OLED");
+    while (true);
+  }
+
+  display.clearDisplay();
+
+  // Taille du texte
+  display.setTextSize(2);
+
+  // Couleur du texte
+  display.setTextColor(SSD1306_WHITE);
+
+  // Position du curseur
+  display.setCursor(10, 20);
+
+  // Texte à afficher
+  display.println("Entrez votre empreinte");
+
+  // Envoi à l'écran
+  display.display();
 }
 
 void loop()                     
@@ -53,6 +88,7 @@ void loop()
       // ÉTAPE 1 : L'empreinte correspond ! (ID trouvé)
       Serial.print("Empreinte valide trouvée ! ID correspondant : ");
       Serial.println(fingerprintID);
+      display.println("Accès autorisé");  // l'écran affiche accès autorisé
       
       digitalWrite(LED_SUCCES, HIGH); // Allume la LED 13
       digitalWrite(LED_ECHEC, LOW);   // Éteint la LED 4
@@ -61,8 +97,8 @@ void loop()
       
     } else if (fingerprintID == 0) {
       // ÉTAPE 2 : Un doigt a été posé mais il n'est pas reconnu
-      Serial.println("Accès refusé : Empreinte inconnue.");
-      
+      Serial.println("Accès refusé : Empreinte inconnue.");  //l'écran affiche un accès refusé
+      display.println("Accès refusé!");
       digitalWrite(LED_ECHEC, HIGH);   // Allume la LED 4
       digitalWrite(LED_SUCCES, LOW);   // Éteint la LED 13
       delay(3000);                     // Reste allumée pendant 3 secondes
